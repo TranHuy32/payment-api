@@ -18,12 +18,14 @@ export enum ActionType {
   ACCEPT = "ACCEPT"
 }
 
+export enum TypeBank {
+  TP_BANK = 1,
+}
+
 @Schema()
 export class Payment {
-  @Prop({ default: null })
-  user_id: string;
   @Prop({ required: true })
-  userNumber: string;
+  userName: string;
   @Prop({ required: true })
   lastBalance: number;
   @Prop({ default: null })
@@ -40,17 +42,13 @@ export class Payment {
     default: PaymentStatus.PENDING,
   })
   status: PaymentStatus;
+  // @Prop({ required: null })
+  // customerBankContent: string;
+  // @Prop({ default: null })
+  // customerBankName: string;
+  // @Prop({ default: null })
+  // customerBankAccountNumber: string;
   @Prop({ default: null })
-  adminBankName: string;
-  @Prop({ default: null })
-  adminBankAccountNumber: string;
-  @Prop({ required: null })
-  customerBankContent: string;
-  @Prop({ default: null })
-  customerBankName: string;
-  @Prop({ default: null })
-  customerBankAccountNumber: string;
-  @Prop({  default: null })
   groupId: string;
   @Prop({ default: null })
   completedAt: string;
