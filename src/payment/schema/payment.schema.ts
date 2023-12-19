@@ -18,10 +18,6 @@ export enum ActionType {
   ACCEPT = "ACCEPT"
 }
 
-export enum TypeBank {
-  TP_BANK = 1,
-}
-
 @Schema()
 export class Payment {
   @Prop({ required: true })

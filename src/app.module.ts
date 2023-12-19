@@ -2,8 +2,9 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
-import { PaymentModule } from './payment/payment.module';
 import "dotenv/config"
+import { PaymentModule } from "./payment/payment.module";
+import { BankModule } from "./bank/bank.module";
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import "dotenv/config"
       }),
       inject: [ConfigService],
     }),
-    PaymentModule
+    PaymentModule,
+    BankModule
   ],
   controllers: [],
   providers: [],

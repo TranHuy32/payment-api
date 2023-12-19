@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PaymentRepository } from './repository/payment.repository';
 import {
-  ActionType,
   Payment,
   PaymentDocument,
   PaymentStatus,
   PaymentType,
-  TypeBank,
 } from './schema/payment.schema';
 import PaymentError, { PaymentErrorCode } from './payment.error';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { TypeBank } from 'src/bank/schema/bank.schema';
 
 @Injectable()
 export class PaymentService {
@@ -17,7 +16,7 @@ export class PaymentService {
 
   async createPayment(
     createPaymentDto: CreatePaymentDto,
-  ) {
+  ): Promise<PaymentDocument> {
 
     const newPayment = new Payment
     const paymentDetails: any = {};
