@@ -1,25 +1,31 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { TypeBank } from 'src/bank/schema/bank.schema';
 
 export type PaymentDocument = Payment & Document;
 
 export enum PaymentStatus {
   PENDING = 'PENDING',
+  WAIT_ADMIN = 'WAIT_ADMIN',
+  WRONG_DEPOSIT_INFO = 'WRONG_DEPOSIT_INFO',
   COMPLETED = 'COMPLETED',
   CANCELED = 'CANCELED',
 }
+
 export enum PaymentType {
   DEPOSIT = 'DEPOSIT',
   WITHDRAW = 'WITHDRAW',
 }
 
 export enum ActionType {
-  CANCEL = "CANCEL",
-  ACCEPT = "ACCEPT"
+  CANCEL = 'CANCEL',
+  ACCEPT = 'ACCEPT',
 }
 
 @Schema()
 export class Payment {
+  @Prop({ default: null })
+  user_id: string;
   @Prop({ required: false })
   userName: string;
   @Prop({ default: null })
@@ -29,6 +35,10 @@ export class Payment {
     required: true,
   })
   type: PaymentType;
+  @Prop({
+    enum: Object.values(TypeBank),
+  })
+  depositBankType: TypeBank;
   @Prop({ required: true })
   amount: number;
   @Prop({
@@ -36,16 +46,22 @@ export class Payment {
     default: PaymentStatus.PENDING,
   })
   status: PaymentStatus;
-  // @Prop({ required: null })
-  // customerBankContent: string;
-  // @Prop({ default: null })
-  // customerBankName: string;
-  // @Prop({ default: null })
-  // customerBankAccountNumber: string;
+  @Prop({ required: null })
+  customerBankContent: string;
+  @Prop({ default: null })
+  customerBankName: string;
+  @Prop({ default: null })
+  customerBankOwner: string;
+  @Prop({ default: null })
+  customerBankAccountNumber: string;
   @Prop({ default: null })
   groupId: string;
   @Prop({ default: null })
   ND: string;
+  @Prop({ default: null })
+  SD: number;
+  @Prop({ default: true })
+  depositIsAdd: boolean;
   @Prop({ default: true })
   isRightND: boolean;
   @Prop({ default: null })
