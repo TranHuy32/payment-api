@@ -20,10 +20,8 @@ export enum ActionType {
 
 @Schema()
 export class Payment {
-  @Prop({ required: true })
+  @Prop({ required: false })
   userName: string;
-  @Prop({ required: true })
-  lastBalance: number;
   @Prop({ default: null })
   owner_id: string;
   @Prop({
@@ -46,6 +44,10 @@ export class Payment {
   // customerBankAccountNumber: string;
   @Prop({ default: null })
   groupId: string;
+  @Prop({ default: null })
+  ND: string;
+  @Prop({ default: true })
+  isRightND: boolean;
   @Prop({ default: null })
   completedAt: string;
   @Prop({ default: null })

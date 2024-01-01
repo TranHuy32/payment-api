@@ -6,13 +6,17 @@ import {
   PaymentStatus,
   PaymentType,
 } from './schema/payment.schema';
-import PaymentError, { PaymentErrorCode } from './payment.error';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { TypeBank } from 'src/bank/schema/bank.schema';
+import { BankService } from 'src/bank/bank.service';
+import { CreateBankDto } from 'src/bank/dto/create-bank.dto';
 
 @Injectable()
 export class PaymentService {
-  constructor(private readonly paymentRepository: PaymentRepository) { }
+  constructor(
+    private readonly paymentRepository: PaymentRepository,
+    private readonly bankService: BankService
+  ) { }
 
   async createPayment(
     createPaymentDto: CreatePaymentDto,
@@ -29,27 +33,69 @@ export class PaymentService {
           const [key, value] = detail.split(":")
           paymentDetails[key] = value
         })
+        console.log(paymentDetails);
 
         if (!!!paymentDetails['PS'] || !!!paymentDetails['ND'] || !!!paymentDetails['SD']) {
-          if (!!!paymentDetails['PS']) console.log("[Create Payment Err] Thieu PS");
+          if (!!!paymentDetails['PS']) {
+            console.log("[Create Payment Err] Thieu PS")
+            return
+          }
+          if (!!!paymentDetails['SD']) {
+            console.log("[Create Payment Err] Thieu SD");
+            return
+          }
           if (!!!paymentDetails['ND']) console.log("[Create Payment Err] Thieu ND");
-          if (!!!paymentDetails['SD']) console.log("[Create Payment Err] Thieu SD");
-          return
         }
 
-        if (!!paymentDetails['ND'] && !await this.validateUserName(paymentDetails['ND'].replaceAll(" ", ""))) {
-          console.log(`[Create Payment Err] Sai noi dung chuyen khoan: ${paymentDetails['ND']}`);
-          return
-        }
+        let isAdd = true
 
+        console.log(2222, !!paymentDetails['PS']?.includes('-'));
         if (!!paymentDetails['PS']?.includes('-')) {
           console.log(`[Create Payment Err] Tai khoan bi tru tien: ${paymentDetails['PS'].replaceAll(" ", "")}`);
-          return
+          isAdd = false
         }
-
+        if (!await this.validateUserName(paymentDetails['ND'].replaceAll(" ", ""))) {
+          console.log(`[Create Payment Err] Sai noi dung chuyen khoan: ${paymentDetails['ND']}`);
+          newPayment.isRightND = false
+        } else {
+          newPayment.userName = paymentDetails['ND'].replaceAll(" ", "")
+          newPayment.isRightND = true
+        }
+        const SD = await this.transferAmount(paymentDetails['SD'])
         newPayment.amount = await this.transferAmount(paymentDetails['PS'])
-        newPayment.lastBalance = await this.transferAmount(paymentDetails['SD'])
-        newPayment.userName = paymentDetails['ND'].replaceAll(" ", "")
+        newPayment.ND = paymentDetails['ND']
+
+        // update bank
+
+        const bank = await this.bankService.findBankByType(TypeBank.TP_BANK)
+        if (!!!bank) {
+          const createBankDto = new CreateBankDto
+          createBankDto.typeBank = TypeBank.TP_BANK
+          createBankDto.lastBalance = SD
+          await this.bankService.createBank(createBankDto)
+        }
+        if (!!bank) {
+          if (isAdd) {
+            if (bank.lastBalance + newPayment.amount === SD) {
+              bank.lastBalance = await this.transferAmount(paymentDetails['SD'])
+            } else {
+              console.log("[Create Payment Err] Sai so du cuoi");
+              return
+            }
+          }
+          if (!isAdd) {
+            if (bank.lastBalance - newPayment.amount === SD) {
+              bank.lastBalance = await this.transferAmount(paymentDetails['SD'])
+            } else {
+              console.log("[Create Payment Err] Sai so du cuoi");
+              return
+            }
+          }
+          bank.updatedAt = new Date().toLocaleString('en-GB', {
+            hour12: false,
+          });
+          await bank.save()
+        }
         break;
 
       default:
@@ -61,11 +107,11 @@ export class PaymentService {
     newPayment.createdAt = new Date().toLocaleString('en-GB', {
       hour12: false,
     });
-    newPayment.type = PaymentType.WITHDRAW;
+    newPayment.type = PaymentType.DEPOSIT;
     const paymentCreated = await this.paymentRepository.createObject(
       newPayment
     );
-    console.log(`[Create Payment Info] Nap thanh công: ${paymentCreated.amount}k So du cuoi: ${paymentCreated.lastBalance}k`);
+    // console.log(`[Create Payment Info] Nap thanh công: ${paymentCreated.amount}k So du cuoi: ${bank.lastBalance}k`);
     return paymentCreated;
   }
 

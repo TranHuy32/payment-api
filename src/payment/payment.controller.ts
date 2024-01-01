@@ -1,13 +1,7 @@
 import {
   Body,
   Controller,
-  Get,
-  Param,
   Post,
-  Put,
-  Query,
-  Req,
-  UseGuards,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import BaseController from 'src/base.controller';

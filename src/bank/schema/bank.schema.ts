@@ -4,15 +4,16 @@ import { Document } from 'mongoose';
 export type BankDocument = Bank & Document;
 
 export enum TypeBank {
-  TP_BANK = 1,
+  TP_BANK = "TP_BANK"
 }
 
 @Schema()
 export class Bank {
   @Prop({
     enum: Object.values(TypeBank),
+    required: true,
   })
-  typeBank: number;
+  typeBank: TypeBank;
   @Prop({ required: true })
   lastBalance: number;
   @Prop({ required: true })
