@@ -22,7 +22,7 @@ export class PaymentService {
   async createPayment(
     createPaymentDto: CreatePaymentDto,
   ): Promise<PaymentDocument | boolean> {
-    let paymentResultId = {};
+    let paymentResultId = '';
     const newPayment = new Payment();
     const paymentDetails: any = {};
     const decodedContentBank = decodeURIComponent(
@@ -79,7 +79,7 @@ export class PaymentService {
           `[Create Payment Err] Sai noi dung chuyen khoan: ${paymentDetails['ND']}`,
         );
         newPayment.isRightND = false;
-        newPayment.status = PaymentStatus.WRONG_DEPOSIT_INFO;
+        newPayment.status = PaymentStatus.WRONG_ND;
       } else {
         newPayment.userName = paymentDetails['ND'].replaceAll(' ', '');
         newPayment.isRightND = true;
@@ -87,16 +87,17 @@ export class PaymentService {
       }
       const SD = await this.transferAmount(paymentDetails['SD']);
       newPayment.amount = await this.transferAmount(paymentDetails['PS']);
-      newPayment.ND = paymentDetails['ND'] || '';
+      newPayment.ND = !!paymentDetails['ND'] ? paymentDetails['ND'] : '';
       newPayment.depositBankType = TypeBank.TP_BANK;
       newPayment.SD = SD;
       const paymentCreated = await this.paymentRepository.createObject(
         newPayment,
       );
+
       if (!!newPayment.isRightND && !!newPayment.userName) {
         const URL = process.env.APP_BE_URL || '';
         let user: any;
-        let isChange = false;
+        let isChange = false;        
         await axios
           .get(`${URL}/users/detailForDeposit/${newPayment.userName}`)
           .then((response) => {
@@ -106,7 +107,8 @@ export class PaymentService {
             isChange = true;
           })
           .catch((error) => {
-            paymentCreated.status = PaymentStatus.WRONG_DEPOSIT_INFO;
+            paymentCreated.status = PaymentStatus.WRONG_ND;
+            paymentCreated.isRightND = false
             isChange = true;
             console.error('[Axios Error]', error.message);
           });
@@ -114,7 +116,7 @@ export class PaymentService {
           await paymentCreated.save();
         }
 
-        paymentResultId = paymentCreated._id;
+        paymentResultId = !!paymentCreated._id ? paymentCreated._id :  '';
 
         // update bank
         const bank = await this.bankService.findBankByType(TypeBank.TP_BANK);
@@ -159,7 +161,6 @@ export class PaymentService {
         }
       }
     }
-    console.log();
 
     // console.log(`[Create Payment Info] Nap thanh công: ${paymentCreated.amount}k So du cuoi: ${bank.lastBalance}k`);
     return !!paymentResultId
