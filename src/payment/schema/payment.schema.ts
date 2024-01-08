@@ -27,7 +27,7 @@ export enum ActionType {
 export class Payment {
   @Prop({ default: null })
   user_id: string;
-  @Prop({ required: false })
+  @Prop({ default: null })
   userName: string;
   @Prop({ default: null })
   owner_id: string;
