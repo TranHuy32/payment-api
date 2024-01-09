@@ -97,7 +97,7 @@ export class PaymentService {
       if (!!newPayment.isRightND && !!newPayment.userName) {
         const URL = process.env.APP_BE_URL || '';
         let user: any;
-        let isChange = false;        
+        let isChange = false;
         await axios
           .get(`${URL}/users/detailForDeposit/${newPayment.userName}`)
           .then((response) => {
@@ -108,58 +108,58 @@ export class PaymentService {
           })
           .catch((error) => {
             paymentCreated.status = PaymentStatus.WRONG_ND;
-            paymentCreated.isRightND = false
+            paymentCreated.isRightND = false;
             isChange = true;
             console.error('[Axios Error]', error.message);
           });
         if (!!isChange) {
           await paymentCreated.save();
         }
+      }
 
-        paymentResultId = !!paymentCreated._id ? paymentCreated._id :  '';
-
-        // update bank
-        const bank = await this.bankService.findBankByType(TypeBank.TP_BANK);
-        if (!!!bank) {
-          const createBankDto = new CreateBankDto();
-          createBankDto.typeBank = TypeBank.TP_BANK;
-          createBankDto.lastBalance = SD;
-          await this.bankService.createBank(createBankDto);
-          console.log('[Create Bank Success] tao bank thanh cong');
-        }
-        if (!!bank) {
-          if (isAdd) {
-            if (bank.lastBalance + newPayment.amount === SD) {
-              bank.lastBalance = SD;
-              bank.updatedAt = new Date().toLocaleString('en-GB', {
-                hour12: false,
-              });
-              await bank.save();
-              console.log('[Upadate Bank Success] update so du thanh cong');
-            } else {
-              console.log('[Create Payment Err] Sai so du cuoi');
-              paymentCreated.status = PaymentStatus.WRONG_DEPOSIT_INFO;
-              await paymentCreated.save();
-            }
+      // update bank
+      const bank = await this.bankService.findBankByType(TypeBank.TP_BANK);
+      if (!!!bank) {
+        const createBankDto = new CreateBankDto();
+        createBankDto.typeBank = TypeBank.TP_BANK;
+        createBankDto.lastBalance = SD;
+        await this.bankService.createBank(createBankDto);
+        console.log('[Create Bank Success] tao bank thanh cong');
+      }
+      if (!!bank) {
+        if (isAdd) {
+          if (bank.lastBalance + newPayment.amount === SD) {
+            bank.lastBalance = SD;
+            bank.updatedAt = new Date().toLocaleString('en-GB', {
+              hour12: false,
+            });
+            await bank.save();
+            console.log('[Upadate Bank Success] update so du thanh cong');
+          } else {
+            console.log('[Create Payment Err] Sai so du cuoi');
+            paymentCreated.status = PaymentStatus.WRONG_DEPOSIT_INFO;
+            await paymentCreated.save();
           }
-          if (!isAdd) {
-            if (bank.lastBalance - newPayment.amount === SD) {
-              bank.lastBalance = SD;
-              paymentCreated.status = PaymentStatus.WRONG_DEPOSIT_INFO;
-              await paymentCreated.save();
-              bank.updatedAt = new Date().toLocaleString('en-GB', {
-                hour12: false,
-              });
-              await bank.save();
-              console.log('[Upadate Bank Success] update so du thanh cong');
-            } else {
-              console.log('[Create Payment Err] Sai so du cuoi');
-              paymentCreated.status = PaymentStatus.WRONG_DEPOSIT_INFO;
-              await paymentCreated.save();
-            }
+        }
+        if (!isAdd) {
+          if (bank.lastBalance - newPayment.amount === SD) {
+            bank.lastBalance = SD;
+            paymentCreated.status = PaymentStatus.WRONG_DEPOSIT_INFO;
+            paymentCreated.depositIsAdd = false;
+            await paymentCreated.save();
+            bank.updatedAt = new Date().toLocaleString('en-GB', {
+              hour12: false,
+            });
+            await bank.save();
+            console.log('[Upadate Bank Success] update so du thanh cong');
+          } else {
+            console.log('[Create Payment Err] Sai so du cuoi');
+            paymentCreated.status = PaymentStatus.WRONG_DEPOSIT_INFO;
+            await paymentCreated.save();
           }
         }
       }
+      paymentResultId = !!paymentCreated._id ? paymentCreated._id : '';
     }
 
     // console.log(`[Create Payment Info] Nap thanh công: ${paymentCreated.amount}k So du cuoi: ${bank.lastBalance}k`);
